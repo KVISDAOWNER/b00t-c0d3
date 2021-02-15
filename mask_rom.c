@@ -56,7 +56,7 @@ typedef struct boot_policy_t{
     
 } boot_policy_t;
 
-typedef void(rom_ext_boot_func)(void);
+typedef void(rom_ext_boot_func)(void); // Function pointer used to store the entry of the next stage.
 
 
 void mask_rom_boot(void)
@@ -92,12 +92,13 @@ void mask_rom_boot(void)
         
         //Step 2.iii.e
         if (!final_jump_to_rom_ext(current_rom_ext_manifest)) {
-            //Step 2.iv            boot_failed(boot_policy, current_rom_ext_manifest);
+            //Step 2.iv            
+            boot_failed(boot_policy, current_rom_ext_manifest);
         }
-    } % End for
+    } // End for
     
     //Step 2.iv
-    boot_failed(boot_policy);
+    boot_failed(boot_policy, rom_exts_to_try.rom_exts_mfs[rom_exts_to_try.size - 1]);
 
 }
 
@@ -105,14 +106,14 @@ extern int[] READ_FLASH(int start, int end);
 
 boot_policy_t read_boot_policy()
 {
-    int data[] = READ_FLASH(0x0000, 0x1000);
+    int data[] = READ_FLASH(0x0000, 0x1000); // 0 - 4096
     
     boot_policy_t boot_policy;
     
-    memcpy(&boot_policy.identifier, data, 100); 
-    memcpy(&boot_policy.rom_ext_slit, data+(100/sizeof(int)), 700); 
-    memcpy(&boot_policy.fail, data+(800/sizeof(int)), 100); 
-    memcpy(&boot_policy.fail, data+(900/sizeof(int)), 100);
+    memcpy(&boot_policy.identifier, data, 512); 
+    memcpy(&boot_policy.rom_ext_slot, data+(100/sizeof(int)), 2560); 
+    memcpy(&boot_policy.success, data+(800/sizeof(int)), 512); 
+    memcpy(&boot_policy.fail, data+(900/sizeof(int)), 512);
     
     return boot_policy;
 }
