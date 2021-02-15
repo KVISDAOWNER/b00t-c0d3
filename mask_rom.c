@@ -56,7 +56,7 @@ typedef struct boot_policy_t{
     
 } boot_policy_t;
 
-typedef void(rom_ext_boot_func)(void); // Function pointer used to store the entry of the next stage.
+typedef void(rom_ext_boot_func)(void); // Function type used to define function pointer to the entry of the ROM_EXT stage.
 
 
 void mask_rom_boot(void)
