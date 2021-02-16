@@ -126,10 +126,12 @@ pub_key_t read_pub_key(rom_ext_manifest_t current_rom_ext_manifest){
 
 extern int check_pub_key_valid(pub_key_t rom_ext_pub_key); // returns a boolean value
 
-extern int HMAC(pub_key_t pub_key, rom_ext_manifest_t manifest);
+//extern int HMAC(pvt key, rom_ext_manifest_t manifest);
+
+extern int RSA_VERIFY(pub_key_t pub_key, rom_ext_manifest_t manifest);
 
 int verify_rom_ext_signature(pub_key_t rom_ext_pub_key, rom_ext_manifest_t current_rom_ext_manifest){
-    return HMAC(rom_ext_pub_key, current_rom_ext_manifest); //0 or 1
+    return RSA_VERIFY(rom_ext_pub_key, current_rom_ext_manifest); //0 or 1
 }
 
 extern void WRITE_PMP_REGION(uint8_t reg, uint8_t r, uint8_t w, uint8_t e, uint8_t l);
