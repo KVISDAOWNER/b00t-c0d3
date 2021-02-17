@@ -111,9 +111,9 @@ boot_policy_t read_boot_policy()
     boot_policy_t boot_policy;
     
     memcpy(&boot_policy.identifier, data, 512); 
-    memcpy(&boot_policy.rom_ext_slot, data+(100/sizeof(int)), 2560); 
-    memcpy(&boot_policy.success, data+(800/sizeof(int)), 512); 
-    memcpy(&boot_policy.fail, data+(900/sizeof(int)), 512);
+    memcpy(&boot_policy.rom_ext_slot, data+(512/sizeof(int)), 2560); 
+    memcpy(&boot_policy.success, data+(3072/sizeof(int)), 512); 
+    memcpy(&boot_policy.fail, data+(3584/sizeof(int)), 512);
     
     return boot_policy;
 }
