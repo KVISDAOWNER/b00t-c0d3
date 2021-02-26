@@ -84,9 +84,9 @@ pub_key_t read_pub_key(rom_ext_manifest_t current_rom_ext_manifest) {
 
 extern uint CHECK_PUB_KEY_VALID(pub_key_t rom_ext_pub_key); // returns a boolean value
 
-extern int* HASH(char* message);
+extern char* HASH(char* message);
 
-extern int RSA_VERIFY(pub_key_t pub_key, int* message, int signature);
+extern int RSA_VERIFY(pub_key_t pub_key, char* message, int signature);
 
 int verify_rom_ext_signature(pub_key_t rom_ext_pub_key, rom_ext_manifest_t manifest) {
     return RSA_VERIFY(rom_ext_pub_key, HASH(manifest.image_code), manifest.signature); //0 or 1
