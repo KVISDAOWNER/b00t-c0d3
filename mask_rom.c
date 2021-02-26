@@ -82,17 +82,18 @@ pub_key_t read_pub_key(rom_ext_manifest_t current_rom_ext_manifest) {
     return current_rom_ext_manifest.pub_signature_key;
 }
 
-extern uint CHECK_PUB_KEY_VALID(pub_key_t rom_ext_pub_key); // returns a boolean value
+extern int CHECK_PUB_KEY_VALID(pub_key_t rom_ext_pub_key); // returns a boolean value
 
 extern char* HASH(char* message);
 
-extern int RSA_VERIFY(pub_key_t pub_key, char* message, int signature);
+extern int RSA_VERIFY(pub_key_t pub_key, char* message, int32_t* signature);
 
 int verify_rom_ext_signature(pub_key_t rom_ext_pub_key, rom_ext_manifest_t manifest) {
     return RSA_VERIFY(rom_ext_pub_key, HASH(manifest.image_code), manifest.signature); //0 or 1
 }
 
 extern void WRITE_PMP_REGION(uint8_t reg, uint8_t r, uint8_t w, uint8_t e, uint8_t l);
+
 void pmp_unlock_rom_ext() {
     //Read, Execute, Locked the address space of the ROM extension image
     WRITE_PMP_REGION(       0,          1,          0,          1,          1);
