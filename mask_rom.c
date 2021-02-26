@@ -20,7 +20,7 @@ typedef struct pub_key_t{
 
 //Struct representing rom_ext_manifest
 typedef struct rom_ext_manifest_t{
-    int identifier;
+    uint32_t identifier;
     
     //address of entry point
     //note: not part of the doc on the rom_ext_manifest, but included based on code seen in mask_rom.c
