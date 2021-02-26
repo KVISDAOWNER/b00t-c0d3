@@ -14,23 +14,23 @@ doc/security/specs/secure_boot/index.md
 
 //Represents a public key
 typedef struct pub_key_t{
-    int key;
+    int32_t key[96];
     //something else
 } pub_key_t;
 
 //Struct representing rom_ext_manifest
 typedef struct rom_ext_manifest_t{
-    int identifier;
+    uint32_t identifier;
     
     //address of entry point
     //note: not part of the doc on the rom_ext_manifest, but included based on code seen in mask_rom.c
     int* entry_point;
     
-    int signature;
+    int32_t signature[96];
     
     //public part of signature key
     pub_key_t pub_signature_key;
-    int image_code[];
+    char image_code[];
 } rom_ext_manifest_t;
 
 
@@ -48,8 +48,12 @@ typedef struct boot_policy_t{
     //which rom_ext_slot to boot
     int rom_ext_slot;
     
-    //what to do if ROM Ext validation fails
-    void (*fail) (rom_ext_manifest_t);    
+    //what to do if all ROM Ext are invalid
+    void (*fail) ();    
+
+    //what to do if the ROM Ext unexpectedly returns
+    void (*fail_rom_ext_terminated) (rom_ext_manifest_t);    
+
 } boot_policy_t;
 
 
@@ -80,19 +84,20 @@ pub_key_t read_pub_key(rom_ext_manifest_t current_rom_ext_manifest) {
 
 extern int CHECK_PUB_KEY_VALID(pub_key_t rom_ext_pub_key); // returns a boolean value
 
-//extern int HMAC(pvt key, rom_ext_manifest_t manifest);
+extern char* HASH(char* message);
 
-extern int RSA_VERIFY(pub_key_t pub_key, int* message, int signature);
+extern int RSA_VERIFY(pub_key_t pub_key, char* message, int32_t* signature);
 
 int verify_rom_ext_signature(pub_key_t rom_ext_pub_key, rom_ext_manifest_t manifest) {
-    return RSA_VERIFY(rom_ext_pub_key, manifest.image_code, manifest.signature); //0 or 1
+    return RSA_VERIFY(rom_ext_pub_key, HASH(manifest.image_code), manifest.signature); //0 or 1
 }
 
 extern void WRITE_PMP_REGION(uint8_t reg, uint8_t r, uint8_t w, uint8_t e, uint8_t l);
+
 void pmp_unlock_rom_ext() {
     //Read, Execute, Locked the address space of the ROM extension image
-    WRITE_PMP_REGION(0, 1, 0, 1, 1);
-    //               Region     Read        Write       Execute     Locked 
+    WRITE_PMP_REGION(       0,          1,          0,          1,          1);
+    //                  Region        Read       Write     Execute     Locked 
 }
 
 int final_jump_to_rom_ext(rom_ext_manifest_t current_rom_ext_manifest) { // Returns a boolean value.
@@ -106,9 +111,14 @@ int final_jump_to_rom_ext(rom_ext_manifest_t current_rom_ext_manifest) { // Retu
     return 0;
 }
 
-void boot_failed(boot_policy_t boot_policy, rom_ext_manifest_t current_rom_ext_manifest) {
-    boot_policy.fail(current_rom_ext_manifest);
+void boot_failed(boot_policy_t boot_policy) {
+    boot_policy.fail();
 }
+
+void boot_failed_rom_ext_terminated(boot_policy_t boot_policy, rom_ext_manifest_t current_rom_ext_manifest) {
+    boot_policy.fail_rom_ext_terminated(current_rom_ext_manifest);
+}
+
 
 int check_rom_ext_manifest(rom_ext_manifest_t manifest) {
     return !manifest.signature; // If the signature == 0, the manifest is invalid.
@@ -136,7 +146,7 @@ void mask_rom_boot(void)
         if (!CHECK_PUB_KEY_VALID(rom_ext_pub_key)) {
             continue;
         }
-        
+
         //Step 2.iii.b
         if (!verify_rom_ext_signature(rom_ext_pub_key, current_rom_ext_manifest)) {
             continue;
@@ -148,12 +158,11 @@ void mask_rom_boot(void)
         //Step 2.iii.e
         if (!final_jump_to_rom_ext(current_rom_ext_manifest)) {
             //Step 2.iv            
-            boot_failed(boot_policy, current_rom_ext_manifest);
+            boot_failed_rom_ext_terminated(boot_policy, current_rom_ext_manifest);
         }
     } // End for
     
     //Step 2.iv
-    boot_failed(boot_policy, rom_exts_to_try.rom_exts_mfs[rom_exts_to_try.size - 1]);
-
+    boot_failed(boot_policy);
 }
 
