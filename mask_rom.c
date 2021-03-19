@@ -82,7 +82,7 @@ pub_key_t read_pub_key(rom_ext_manifest_t current_rom_ext_manifest) {
     return current_rom_ext_manifest.pub_signature_key;
 }
 
-extern int CHECK_PUB_KEY_VALID(pub_key_t rom_ext_pub_key); // returns a boolean value
+int check_pub_key_valid(pub_key_t rom_ext_pub_key); // returns a boolean value
 
 extern char* HASH(char* message);
 
@@ -143,7 +143,7 @@ void mask_rom_boot(void)
         pub_key_t rom_ext_pub_key = read_pub_key(current_rom_ext_manifest); 
         
         //Step 2.iii.b
-        if (!CHECK_PUB_KEY_VALID(rom_ext_pub_key)) {
+        if (!check_pub_key_valid(rom_ext_pub_key)) {
             continue;
         }
 
