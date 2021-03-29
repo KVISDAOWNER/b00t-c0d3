@@ -14,7 +14,8 @@ doc/security/specs/secure_boot/index.md
 
 //Represents a public key
 typedef struct pub_key_t{
-    int32_t key[96];
+    int32_t modulus[96];
+    int32_t exponent;
     //something else
 } pub_key_t;
 
