@@ -23,10 +23,6 @@ typedef struct pub_key_t{
 typedef struct rom_ext_manifest_t{
     uint32_t identifier;
     
-    //address of entry point
-    //note: not part of the doc on the rom_ext_manifest, but included based on code seen in mask_rom.c
-    int* entry_point;
-    
     int32_t signature[96];
     
     //public part of signature key
@@ -58,32 +54,17 @@ typedef struct boot_policy_t{
 } boot_policy_t;
 
 
-
 typedef void(rom_ext_boot_func)(void); // Function type used to define function pointer to the entry of the ROM_EXT stage.
 
+extern boot_policy_t read_boot_policy();
 
-extern int* READ_FLASH(int start, int end);
-
-boot_policy_t read_boot_policy()
-{
-    int* data = READ_FLASH(0, sizeof(boot_policy_t)); 
-
-    boot_policy_t boot_policy;
-
-    memcpy(&boot_policy.identifier, data, sizeof(boot_policy.identifier));
-    memcpy(&boot_policy.rom_ext_slot, data + 1, sizeof(boot_policy.rom_ext_slot));
-    memcpy(&boot_policy.fail, data + 2, sizeof(boot_policy.fail));
-
-    return boot_policy;
-}
-
-rom_exts_manifests_t rom_ext_manifests_to_try(boot_policy_t boot_policy) {}
+extern rom_exts_manifests_t rom_ext_manifests_to_try(boot_policy_t boot_policy);
 
 pub_key_t read_pub_key(rom_ext_manifest_t current_rom_ext_manifest) {
     return current_rom_ext_manifest.pub_signature_key;
 }
 
-int check_pub_key_valid(pub_key_t rom_ext_pub_key); // returns a boolean value
+extern int check_pub_key_valid(pub_key_t rom_ext_pub_key); // returns a boolean value
 
 extern char* HASH(char* message);
 
@@ -100,6 +81,13 @@ void pmp_unlock_rom_ext() {
     WRITE_PMP_REGION(       0,          1,          0,          1,          1);
     //                  Region        Read       Write     Execute     Locked 
 }
+
+void enable_memory_protection() {
+    //Read and Lock the address space of the entire flash.
+    WRITE_PMP_REGION(       15,           1,          0,          0,          1);
+    //                  Region        Read       Write     Execute     Locked 
+}
+
 
 int final_jump_to_rom_ext(rom_ext_manifest_t current_rom_ext_manifest) { // Returns a boolean value.
     //Execute rom ext code step 2.iii.e
@@ -122,11 +110,18 @@ void boot_failed_rom_ext_terminated(boot_policy_t boot_policy, rom_ext_manifest_
 
 
 int check_rom_ext_manifest(rom_ext_manifest_t manifest) {
-    return !manifest.signature; // If the signature == 0, the manifest is invalid.
+    for (int i = 0; i < 96; i++)
+    {
+        if (manifest.signature != 0)
+            return 1;
+    }
+    return 0; // If the signature == 0, the manifest is invalid.
 }
 
 void mask_rom_boot(void)
 {
+    enable_memory_protection();
+
     boot_policy_t boot_policy = read_boot_policy();
     
     rom_exts_manifests_t rom_exts_to_try = rom_ext_manifests_to_try(boot_policy);
