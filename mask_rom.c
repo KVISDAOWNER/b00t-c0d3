@@ -126,7 +126,7 @@ void boot_failed_rom_ext_terminated(boot_policy_t boot_policy, rom_ext_manifest_
 
 
 int check_rom_ext_manifest(rom_ext_manifest_t manifest) {
-    return manifest.identifier == expectedRomExtIdentifier; // If the signature == 0, the manifest is invalid.
+    return manifest.identifier == expectedRomExtIdentifier; // If the identifier != expectedRomExtIdentifier, the manifest is invalid.
 }
 
 void mask_rom_boot(void)
