@@ -12,6 +12,10 @@ doc/security/specs/secure_boot/index.md
 #include <string.h>
 #include <stdint.h>
 
+// The identifier that a correct manifest must contain.
+// Based on https://github.com/lowRISC/opentitan/blob/master/sw/device/silicon_creator/mask_rom/mask_rom.c
+static const uint_32 expectedRomExtIdentifier = 0x4552544F;
+
 //Represents a public key
 typedef struct pub_key_t{
     int32_t modulus[96];
@@ -122,7 +126,7 @@ void boot_failed_rom_ext_terminated(boot_policy_t boot_policy, rom_ext_manifest_
 
 
 int check_rom_ext_manifest(rom_ext_manifest_t manifest) {
-    return !manifest.signature; // If the signature == 0, the manifest is invalid.
+    return manifest.identifier == expectedRomExtIdentifier; // If the signature == 0, the manifest is invalid.
 }
 
 void mask_rom_boot(void)
